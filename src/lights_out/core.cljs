@@ -3,48 +3,43 @@
              [om.dom :as dom :include-macros true]
              [sablono.core :as html :refer-macros [html]]))
 
-;; define your app data so that it doesn't get over-written on reload
+(def SIZE 4)
 
-(def SIZE 12)
+(def initial-squares (vec (repeat (* SIZE SIZE) {:on? false})))
 
 (def app-state
-  (atom {:squares
-         (vec (repeat SIZE (vec (repeat SIZE {:blue? false}))))}))
+  (atom {:squares initial-squares}))
 
 (defn randomize
   []
-  (swap! app-state assoc :squares
-         (mapv (fn [_]
-                 (mapv (fn [_] {:blue? (< (rand) 0.5)})
-                       (range SIZE)))
-               (range SIZE))))
+  (mapv (fn [_] {:on? (< (rand) 0.5)})
+        (range (* SIZE SIZE))))
 
-(defn lights-switch
-  [x y]
-  (fn [state]
-    (let [steps [[0 0] [1 0] [0 1] [-1 0] [0 -1]]
-          steps (mapv (fn [[a b]] [(+ a x) (+ b y)]) steps)
-          steps (filterv (fn [[a b]] (and (<= 0 a (dec SIZE))
-                                         (<= 0 b (dec SIZE))))
-                         steps)]
-      (reduce (fn [state step]
-                (update-in state [:squares
-                                  (first step)
-                                  (second step)
-                                  :blue?]
-                           not))
-              state steps))))
+(defn flip
+  [squares n]
+  (if (and n (<= 0 n (dec (* SIZE SIZE))))
+    (update-in squares [n :on?] not)
+    squares))
+
+(defn flip+
+  [squares n]
+  (let [to-flip [n
+                 (if-not (= (dec SIZE) (rem n SIZE)) (inc n))
+                 (if-not (= 0 (rem n SIZE)) (dec n))
+                 (- n SIZE)
+                 (+ n SIZE)]]
+    (reduce flip squares to-flip)))
 
 (defn square
-  [sq owner {:keys [x y]}]
+  [sq owner {:keys [n]}]
   (reify
     om/IRender
     (render [_]
-      (html [(if (:blue? sq)
+      (html [(if (:on? sq)
                :div.square.blue
                :div.square.green)
              {:on-click (fn [e]
-                          (swap! app-state (lights-switch x y)))}]))))
+                          (swap! app-state update-in [:squares] flip+ n))}]))))
 
 (defn board
   [data owner]
@@ -54,13 +49,14 @@
       (html
        [:table
         [:tbody
-         (for [x (range (count (:squares data)))]
+         (for [x (range SIZE)]
            [:tr
-            (for [y (range (count (first (:squares data))))]
+            (for [y (range SIZE)
+                  :let [n (+ (* y SIZE) x)]]
               [:td
                (om/build square
-                         (get-in data [:squares x y])
-                         {:opts {:x x :y y}})])])]]))))
+                         (get-in data [:squares n])
+                         {:opts {:n n}})])])]]))))
 
 (om/root
  board
