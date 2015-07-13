@@ -10,6 +10,23 @@
 (def app-state
   (atom {:squares initial-squares}))
 
+(defn coord [n] [(quot n SIZE) (rem n SIZE)])
+
+(defn uncoord [[x y]] (+ (* x SIZE) y))
+
+(defn v-plus [[a b] [c d]] [(+ a c) (+ b d)])
+
+(defn in-board [[x y]] (and (<= 0 x (dec SIZE)) (<= 0 y (dec SIZE))))
+
+(def flip-shape [[0 0] [0 1] [0 -1]])
+
+(defn rel-flip-shape
+  [n]
+  (let [p (coord n)
+        ps (mapv v-plus flip-shape (repeat p))
+        ps (filterv in-board ps)]
+    (mapv uncoord ps)))
+
 (defn randomize
   []
   (mapv (fn [_] {:on? (< (rand) 0.5)})
@@ -23,12 +40,7 @@
 
 (defn flip+
   [squares n]
-  (let [to-flip [n
-                 (if-not (= (dec SIZE) (rem n SIZE)) (inc n))
-                 (if-not (= 0 (rem n SIZE)) (dec n))
-                 (- n SIZE)
-                 (+ n SIZE)]]
-    (reduce flip squares to-flip)))
+  (reduce flip squares (rel-flip-shape n)))
 
 (defn square
   [sq owner {:keys [n]}]
@@ -52,7 +64,7 @@
          (for [x (range SIZE)]
            [:tr
             (for [y (range SIZE)
-                  :let [n (+ (* y SIZE) x)]]
+                  :let [n (uncoord [x y])]]
               [:td
                (om/build square
                          (get-in data [:squares n])
