@@ -18,7 +18,7 @@
 
 (defn in-board [[x y]] (and (<= 0 x (dec SIZE)) (<= 0 y (dec SIZE))))
 
-(def flip-shape [[0 0] [0 1] [0 -1]])
+(def flip-shape [[0 0] [0 1] [0 -1] [-1 0] [1 0]])
 
 (defn rel-flip-shape
   [n]
