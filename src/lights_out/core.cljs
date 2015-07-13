@@ -1,14 +1,12 @@
 (ns ^:figwheel-always lights-out.core
     (:require [om.core :as om :include-macros true]
               [om.dom :as dom :include-macros true]
-              [sablono.core :as html :refer-macros [html]]))
+              [sablono.core :as html :refer-macros [html]]
+              [cljs.pprint :refer [pprint]]))
 
 (def SIZE 4)
 
 (def initial-squares (vec (repeat (* SIZE SIZE) {:on? false})))
-
-(def app-state
-  (atom {:squares initial-squares}))
 
 (defn coord [n] [(quot n SIZE) (rem n SIZE)])
 
@@ -16,16 +14,17 @@
 
 (defn v-plus [[a b] [c d]] [(+ a c) (+ b d)])
 
-(defn in-board [[x y]] (and (<= 0 x (dec SIZE)) (<= 0 y (dec SIZE))))
+(defn in-board? [[x y]] (and (<= 0 x (dec SIZE)) (<= 0 y (dec SIZE))))
 
 (def flip-shape [[0 0] [0 1] [0 -1] [-1 0] [1 0]])
 
 (defn rel-flip-shape
   [n]
-  (let [p (coord n)
-        ps (mapv v-plus flip-shape (repeat p))
-        ps (filterv in-board ps)]
-    (mapv uncoord ps)))
+  (->> (coord n)
+       repeat
+       (map v-plus flip-shape)
+       (filter in-board?)
+       (map uncoord)))
 
 (defn flip
   [squares n]
@@ -37,16 +36,22 @@
   [squares n]
   (reduce flip squares (rel-flip-shape n)))
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(def app-state
+  (atom {:squares initial-squares}))
+
 (defn square
   [sq owner {:keys [n]}]
   (reify
     om/IRender
     (render [_]
+      (.log js/console (str "rendering: " n))
       (html [(if (:on? sq)
                :div.square.blue
                :div.square.green)
              {:on-click (fn [e]
-                          (swap! app-state update-in [:squares] flip+ n))}]))))
+                          (swap! app-state update :squares flip+ n))}]))))
 
 (defn board
   [data owner]
