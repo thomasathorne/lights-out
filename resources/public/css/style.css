@@ -1,0 +1,14 @@
+.square {
+    height: 30px;
+    width: 30px;
+    float: left;
+    margin: 0px;
+}
+
+.blue {
+    background-color: #3322af;
+}
+
+.green {
+    background-color: #22aa44;
+}
