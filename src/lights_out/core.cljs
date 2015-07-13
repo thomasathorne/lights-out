@@ -1,7 +1,7 @@
 (ns ^:figwheel-always lights-out.core
-    (:require[om.core :as om :include-macros true]
-             [om.dom :as dom :include-macros true]
-             [sablono.core :as html :refer-macros [html]]))
+    (:require [om.core :as om :include-macros true]
+              [om.dom :as dom :include-macros true]
+              [sablono.core :as html :refer-macros [html]]))
 
 (def SIZE 4)
 
@@ -26,11 +26,6 @@
         ps (mapv v-plus flip-shape (repeat p))
         ps (filterv in-board ps)]
     (mapv uncoord ps)))
-
-(defn randomize
-  []
-  (mapv (fn [_] {:on? (< (rand) 0.5)})
-        (range (* SIZE SIZE))))
 
 (defn flip
   [squares n]
